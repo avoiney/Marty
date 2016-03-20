@@ -34,6 +34,12 @@ class RemoteMethod(object):
 
     # Remote method interface API
 
+    def initialize(self):
+        """ Initialize the RemoteMethod before to use it.
+
+        This is a good place to put connection / authentication routines.
+        """
+
     def get_tree(self, path):
         """ Return a Tree object for the specified path.
         """
@@ -82,7 +88,10 @@ class RemoteManager(object):
             name, class_ = remote.get('method')
             self._remotes[remote.args] = class_(remote.args, class_.config_schema.validate(remote))
 
-    def get(self, name):
+    def get(self, name, initialize=True):
         """ Get remote with provided name or None if remote is unknown.
         """
-        return self._remotes.get(name)
+        remote = self._remotes.get(name)
+        if remote is not None and initialize:
+            remote.initialize()
+        return remote

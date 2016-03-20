@@ -60,8 +60,7 @@ class SSH(RemoteMethod):
 
     config_schema = SSHRemoteMethodSchema()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def initialize(self):
         self._ssh = paramiko.client.SSHClient()
         self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
         self._ssh.connect(self.config.get('server'),
