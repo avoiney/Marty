@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+
+from marty.config import parse_config
+from marty.commands import Command
+from marty.printer import printer
+from marty.remotemethods import RemoteManager
+
+import confiture
+
+
+def main():
+    """ Binary entry-point.
+    """
+
+    # Argument parsing:
+    aparser = argparse.ArgumentParser()
+    aparser.add_argument('-c', '--config', default='/etc/marty.conf',
+                         help='Path to configuration file (default: %(default)s)')
+    aparser.add_argument('-d', '--debug', action='store_true', default=False)
+    aparser.add_argument('-V', '--verbose', action='store_true', default=False)
+    aparser_subs = aparser.add_subparsers(help='Marty commands')
+    Command.load_commands(aparser_subs)
+    args = aparser.parse_args()
+
+    # Configure the main printer:
+    printer.configure(verbose=args.verbose, debug=args.debug)
+
+    # Configuration parsing:
+    try:
+        config = parse_config(args.config)
+    except (confiture.parser.ParsingError, confiture.schema.ValidationError) as err:
+        if args.debug:
+            raise
+        else:
+            printer.p('<b>Error parsing configuration file:</b> {error} ({pos})', error=err, pos=err.position)
+            sys.exit(1)
+
+    # Load storage:
+    name, class_ = config.subsection('storage').get('type')
+    storage = class_(name, class_.config_schema.validate(config.subsection('storage')))
+
+    # Load remotes:
+    try:
+        remotes = RemoteManager(config.subsection('remotes'))
+    except (confiture.parser.ParsingError, confiture.schema.ValidationError) as err:
+        if args.debug:
+            raise
+        else:
+            printer.p('<b>Error parsing configuration file:</b> {error} ({pos})', error=err, pos=err.position)
+            sys.exit(1)
+
+    # Execute the selected command:
+    try:
+        args.command(args, config, storage, remotes)
+    except RuntimeError as err:
+        printer.p('<b>Error:</b> {error}', error=err)
+
+    except KeyboardInterrupt:
+        sys.exit(0)
+
+if __name__ == '__main__':
+    main()
