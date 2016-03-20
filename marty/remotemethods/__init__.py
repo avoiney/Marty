@@ -1,4 +1,6 @@
-from confiture.schema.containers import Section, Value
+import os
+
+from confiture.schema.containers import Section, Value, List
 from confiture.schema.types import String
 
 
@@ -12,6 +14,50 @@ class DefaultRemoteMethodSchema(Section):
 
     _meta = {'args': Value(String())}
     method = Value(String())
+    includes = List(String(), default=[])
+    excludes = List(String(), default=[])
+
+
+class PathPolicy:
+
+    """ Handle policy (include/exclude) of a given path.
+    """
+
+    def __init__(self, includes=None, excludes=None):
+        paths = {}
+
+        # Get paths from configuration:
+        paths.update({PathPolicy.normalize(x): {'policy': 'include',
+                                                'recursive': True} for x in includes})
+        paths.update({PathPolicy.normalize(x): {'policy': 'exclude',
+                                                'recursive': True} for x in excludes})
+
+        # Add non-recursive include paths:
+        for prefix, props in dict(paths).items():
+            if props['policy'] == 'include':
+                while prefix != b'/':
+                    if prefix not in paths:
+                        paths[prefix] = {'policy': props['policy'], 'recursive': False}
+                    prefix = os.path.dirname(prefix)
+        self.paths = list(sorted(paths.items(), reverse=True))
+
+    @staticmethod
+    def normalize(path):
+        if isinstance(path, str):
+            path = path.encode('utf-8')
+        return os.path.normpath(os.path.join(b'/', path))
+
+    def included(self, path):
+        """ Return True if the path has to be included.
+        """
+
+        for prefix, props in self.paths:
+            if props['recursive'] and path.startswith(prefix):
+                return props['policy'] == 'include'
+            elif not props['recursive'] and path == prefix:
+                return props['policy'] == 'include'
+        else:
+            return True  # Default policy is to include
 
 
 class RemoteMethod(object):
@@ -24,6 +70,8 @@ class RemoteMethod(object):
     def __init__(self, name, config):
         self.name = name
         self.config = config
+        self.policy = PathPolicy(includes=self.config.get('includes'),
+                                 excludes=self.config.get('excludes'))
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.name)

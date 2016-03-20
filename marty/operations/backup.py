@@ -42,6 +42,10 @@ def walk_and_ingest_remote(remote, storage, path=b'/', parent=None):
 
     for filename, item in tree.items():
         fullname = os.path.join(path, filename)
+        if not remote.policy.included(fullname):
+            # Skip excluded paths
+            tree.discard(filename)
+            continue
         parent_item = parent[filename] if parent is not None and filename in parent else None
         if item.type == 'blob':
             try:
