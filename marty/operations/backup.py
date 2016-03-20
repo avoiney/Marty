@@ -10,6 +10,9 @@ from marty.printer import printer
 
 def create_backup(storage, remote, parent=None):
     """ Create a new backup of provided remote and return its backup object.
+
+    .. warning:: Do not forget to add a label on returned backup to avoid its
+       removal by the garbage collector.
     """
 
     if parent:
