@@ -24,22 +24,27 @@ class PathPolicy:
     """
 
     def __init__(self, includes=None, excludes=None):
-        paths = {}
+        # Generate the list of root paths:
+        root_paths = {}
+        root_paths.update({PathPolicy.normalize(x): 'include' for x in includes})
+        root_paths.update({PathPolicy.normalize(x): 'exclude' for x in excludes})
 
-        # Get paths from configuration:
-        paths.update({PathPolicy.normalize(x): {'policy': 'include',
-                                                'recursive': True} for x in includes})
-        paths.update({PathPolicy.normalize(x): {'policy': 'exclude',
-                                                'recursive': True} for x in excludes})
+        paths = []
 
-        # Add non-recursive include paths:
-        for prefix, props in dict(paths).items():
-            if props['policy'] == 'include':
+        for root_prefix, root_policy in root_paths.items():
+            # Produce a recursive entry for the root path:
+            paths.append((root_prefix, root_policy, True))
+
+            # Produce non-recursive entries for each path prefix parts:
+            prefix = os.path.dirname(root_prefix)
+            if root_policy == 'include':
                 while prefix != b'/':
-                    if prefix not in paths:
-                        paths[prefix] = {'policy': props['policy'], 'recursive': False}
+                    if root_paths.get(prefix) != 'include':
+                        paths.append((prefix, 'include', False))
                     prefix = os.path.dirname(prefix)
-        self.paths = list(sorted(paths.items(), reverse=True))
+
+        # Sort paths by length, name, recursiveness
+        self.paths = list(sorted(paths, key=lambda x: (len(x[0]), x[0], -x[2]), reverse=True))
 
     @staticmethod
     def normalize(path):
@@ -51,11 +56,11 @@ class PathPolicy:
         """ Return True if the path has to be included.
         """
 
-        for prefix, props in self.paths:
-            if props['recursive'] and path.startswith(prefix):
-                return props['policy'] == 'include'
-            elif not props['recursive'] and path == prefix:
-                return props['policy'] == 'include'
+        for prefix, policy, recursive in self.paths:
+            if recursive and path.startswith(prefix):
+                return policy == 'include'
+            elif not recursive and path == prefix:
+                return policy == 'include'
         else:
             return True  # Default policy is to include
 
