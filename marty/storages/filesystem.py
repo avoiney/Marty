@@ -81,6 +81,10 @@ class Filesystem(Storage):
             # FIXME: end of protected section
             return hex_hash, size, stored_size
 
+    def list(self):
+        for _, _, filename in os.walk(self.pool):
+            yield from filename
+
     def open(self, ref):
         return open(self._get_pool_name(ref), 'rb')
 

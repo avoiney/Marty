@@ -95,6 +95,11 @@ class Storage(object):
         """
         raise NotImplementedError('%s storage type does not implement exists' % self.__class__.__name__)
 
+    def list(self):
+        """ List objects in storage (generator).
+        """
+        raise NotImplementedError('%s storage type does not implement list' % self.__class__.__name__)
+
     def open(self, ref):
         """ Open stream to the provided object.
         """
