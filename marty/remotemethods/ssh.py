@@ -54,6 +54,7 @@ class SSHRemoteMethodSchema(DefaultRemoteMethodSchema):
     ssh_key = Value(String(), default=None)
     enable_ssh_agent = Value(Boolean(), default=True)
     enable_user_ssh_key = Value(Boolean(), default=True)
+    enable_compression = Value(Boolean(), default=False)
 
 
 class SSH(RemoteMethod):
@@ -73,7 +74,7 @@ class SSH(RemoteMethod):
                               allow_agent=self.config.get('enable_ssh_agent'),
                               key_filename=self.config.get('ssh_key'),
                               look_for_keys=self.config.get('enable_user_ssh_key'),
-                              compress=False)
+                              compress=self.config.get('enable_compression'))
         except paramiko.ssh_exception.SSHException as err:
             raise RemoteOperationError('SSH: %s' % err)
         transport = self._ssh.get_transport()
