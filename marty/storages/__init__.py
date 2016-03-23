@@ -100,6 +100,11 @@ class Storage(object):
         """
         raise NotImplementedError('%s storage type does not implement list' % self.__class__.__name__)
 
+    def delete(self, ref):
+        """ Delete object from pool.
+        """
+        raise NotImplementedError('%s storage type does not implement remove' % self.__class__.__name__)
+
     def open(self, ref):
         """ Open stream to the provided object.
         """

@@ -85,6 +85,9 @@ class Filesystem(Storage):
         for _, _, filename in os.walk(self.pool):
             yield from filename
 
+    def delete(self, ref):
+        os.unlink(self._get_pool_name(ref))
+
     def open(self, ref):
         return open(self._get_pool_name(ref), 'rb')
 
