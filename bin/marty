@@ -56,7 +56,10 @@ def main():
     try:
         args.command(args, config, storage, remotes)
     except RuntimeError as err:
-        printer.p('<b>Error:</b> {error}', error=err)
+        if args.debug:
+            raise
+        else:
+            printer.p('<b>Error:</b> {error}', error=err)
 
     except KeyboardInterrupt:
         sys.exit(0)
