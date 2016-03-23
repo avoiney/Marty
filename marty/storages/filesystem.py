@@ -102,3 +102,9 @@ class Filesystem(Storage):
             raise RuntimeError('Label %s already exists' % name)
         self._makedirs(os.path.dirname(filename))
         open(filename, 'w').write(ref)
+
+    def list_labels(self):
+        for dirpath, dirnames, filenames in os.walk(self.labels):
+            prefix = os.path.relpath(dirpath, self.labels)
+            for filename in filenames:
+                yield os.path.join(prefix, filename)

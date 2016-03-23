@@ -121,3 +121,8 @@ class Storage(object):
         """ Delete a label.
         """
         raise NotImplementedError('%s storage type does not implement delete_label' % self.__class__.__name__)
+
+    def list_labels(self):
+        """ Get the list of existing labels (generator).
+        """
+        raise NotImplementedError('%s storage type does not implement list_labels' % self.__class__.__name__)
