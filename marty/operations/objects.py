@@ -1,7 +1,21 @@
 """ Operations on Marty objects.
 """
 
+import os
+
 from marty.printer import printer
+
+
+def walk_tree(storage, ref, prefix=b'/'):
+    """ Recursively walk a tree on the provided storage.
+    """
+
+    tree = storage.get_tree(ref)
+    for name, item in tree.items():
+        fullname = os.path.join(prefix, name)
+        yield (fullname, item)
+        if item.type == 'tree':
+            yield from walk_tree(storage, item.ref, fullname)
 
 
 def gc_walk_used(storage):
