@@ -4,9 +4,9 @@ import inspect
 
 import paramiko
 from confiture.schema.containers import Value
-from confiture.schema.types import String
+from confiture.schema.types import String, Boolean
 
-from marty.remotemethods import DefaultRemoteMethodSchema, RemoteMethod
+from marty.remotemethods import DefaultRemoteMethodSchema, RemoteMethod, RemoteOperationError
 from marty.datastructures import Tree, Blob
 
 
@@ -50,7 +50,10 @@ class SSHRemoteMethodSchema(DefaultRemoteMethodSchema):
     root = Value(String(), default='/')
     server = Value(String())
     login = Value(String(), default='root')
-    password = Value(String())
+    password = Value(String(), default=None)
+    ssh_key = Value(String(), default=None)
+    enable_ssh_agent = Value(Boolean(), default=True)
+    enable_user_ssh_key = Value(Boolean(), default=True)
 
 
 class SSH(RemoteMethod):
@@ -63,12 +66,16 @@ class SSH(RemoteMethod):
     def initialize(self):
         self._ssh = paramiko.client.SSHClient()
         self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
-        self._ssh.connect(self.config.get('server'),
-                          username=self.config.get('login'),
-                          password=self.config.get('password'),
-                          allow_agent=False,
-                          compress=False,
-                          look_for_keys=False)
+        try:
+            self._ssh.connect(self.config.get('server'),
+                              username=self.config.get('login'),
+                              password=self.config.get('password'),
+                              allow_agent=self.config.get('enable_ssh_agent'),
+                              key_filename=self.config.get('ssh_key'),
+                              look_for_keys=self.config.get('enable_user_ssh_key'),
+                              compress=False)
+        except paramiko.ssh_exception.SSHException as err:
+            raise RemoteOperationError('SSH: %s' % err)
         transport = self._ssh.get_transport()
         self._sftp = paramiko.SFTPClient.from_transport(transport)
 
