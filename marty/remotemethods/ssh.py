@@ -70,9 +70,6 @@ class SSH(RemoteMethod):
                           compress=False,
                           look_for_keys=False)
         transport = self._ssh.get_transport()
-        # transport.window_size = 2147483647
-        # transport.packetizer.REKEY_BYTES = pow(2, 40)
-        # transport.packetizer.REKEY_PACKETS = pow(2, 40)
         self._sftp = paramiko.SFTPClient.from_transport(transport)
 
         # Launch the checksum computing loop:
