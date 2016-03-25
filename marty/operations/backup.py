@@ -26,7 +26,7 @@ def create_backup(storage, remote, parent=None):
 
     backup = Backup(parent=parent_ref)
 
-    with backup:
+    with backup, remote:
         backup.errors, backup.stats, backup.root = walk_and_ingest_remote(remote, storage, parent=parent_root)
     ref, size, stored_size = storage.ingest(backup)
     return ref, backup

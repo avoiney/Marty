@@ -85,6 +85,9 @@ class SSH(RemoteMethod):
         # Workaround because Paramiko open stdout as text mode and not binary:
         self._checksum_stdout._set_mode('rb')
 
+    def shutdown(self):
+        self._ssh.close()
+
     @property
     def root(self):
         return self.config.get('root').encode('utf-8')

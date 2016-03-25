@@ -81,6 +81,12 @@ class RemoteMethod(object):
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, self.name)
 
+    def __enter__(self):
+        self.initialize()
+
+    def __exit__(self, type, value, traceback):
+        self.shutdown()
+
     @property
     def type(self):
         return self.__class__.__name__
@@ -91,6 +97,12 @@ class RemoteMethod(object):
         """ Initialize the RemoteMethod before to use it.
 
         This is a good place to put connection / authentication routines.
+        """
+
+    def shutdown(self):
+        """ Shutdown the RemoteMethod after it has been used.
+
+        This is a good place to put connection closing routines.
         """
 
     def get_tree(self, path):
@@ -141,10 +153,7 @@ class RemoteManager(object):
             name, class_ = remote.get('method')
             self._remotes[remote.args] = class_(remote.args, class_.config_schema.validate(remote))
 
-    def get(self, name, initialize=True):
+    def get(self, name):
         """ Get remote with provided name or None if remote is unknown.
         """
-        remote = self._remotes.get(name)
-        if remote is not None and initialize:
-            remote.initialize()
-        return remote
+        return self._remotes.get(name)
