@@ -1,7 +1,7 @@
 import os
 
 from confiture.schema.containers import Section, Value, List
-from confiture.schema.types import String
+from confiture.schema.types import String, Integer, Boolean
 
 
 class RemoteOperationError(RuntimeError):
@@ -10,12 +10,20 @@ class RemoteOperationError(RuntimeError):
     """
 
 
+class SchedulerRemoteMethodSchema(Section):
+
+    _meta = {'repeat': (0, 1)}
+    enabled = Value(Boolean(), default=True)
+    interval = Value(Integer(min=1), default=1440)  # Default = 24h
+
+
 class DefaultRemoteMethodSchema(Section):
 
     _meta = {'args': Value(String())}
     method = Value(String())
     includes = List(String(), default=[])
     excludes = List(String(), default=[])
+    schedule = SchedulerRemoteMethodSchema()
 
 
 class PathPolicy:
@@ -90,6 +98,12 @@ class RemoteMethod(object):
     @property
     def type(self):
         return self.__class__.__name__
+
+    @property
+    def scheduler(self):
+        scheduler_conf = self.config.subsection('schedule')
+        if scheduler_conf is not None and scheduler_conf.get('enabled'):
+            return scheduler_conf.to_dict()
 
     # Remote method interface API
 

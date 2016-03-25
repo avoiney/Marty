@@ -6,7 +6,7 @@ import pkg_resources
 from confiture import Confiture
 from confiture.schema import ValidationError
 from confiture.schema.containers import Section, Value, once
-from confiture.schema.types import String
+from confiture.schema.types import String, Integer
 
 
 class EntryPoint(String):
@@ -55,9 +55,17 @@ class StorageConfig(Section):
     type = Value(EntryPoint('marty.storages'))
 
 
+class SchedulerConfig(Section):
+    _meta = {'repeat': once}
+
+    workers = Value(Integer(min=1), default=2)
+    loop_interval = Value(Integer(min=1), default=60)  # Default: 1mn
+
+
 class RootMartyConfig(Section):
 
     storage = StorageConfig()
+    scheduler = SchedulerConfig()
     remotes = RemotesConfig()
 
 
