@@ -153,6 +153,9 @@ class RemoteManager(object):
             name, class_ = remote.get('method')
             self._remotes[remote.args] = class_(remote.args, class_.config_schema.validate(remote))
 
+    def list(self):
+        yield from self._remotes.values()
+
     def get(self, name):
         """ Get remote with provided name or None if remote is unknown.
         """
