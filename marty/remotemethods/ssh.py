@@ -48,7 +48,7 @@ CHECKSUM_LOOP = 'sh -c \'while read filename; do sha1sum "$filename" || echo "fa
 class SSHRemoteMethodSchema(DefaultRemoteMethodSchema):
 
     root = Value(String(), default='/')
-    server = Value(String())
+    server = Value(String(), default=None)
     login = Value(String(), default='root')
     password = Value(String(), default=None)
     ssh_key = Value(String(), default=None)
@@ -67,8 +67,11 @@ class SSH(RemoteMethod):
     def initialize(self):
         self._ssh = paramiko.client.SSHClient()
         self._ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+        server = self.config.get('server')
+        if server is None:
+            server = self.name
         try:
-            self._ssh.connect(self.config.get('server'),
+            self._ssh.connect(server,
                               username=self.config.get('login'),
                               password=self.config.get('password'),
                               allow_agent=self.config.get('enable_ssh_agent'),
