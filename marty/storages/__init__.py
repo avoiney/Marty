@@ -64,7 +64,7 @@ class Storage(object):
 
         If raise_error is True, raise an exception if label is invalid.
         """
-        if re.match('^[^./?<>\\:*|"]+(/[^./?<>\\:*|"]+)*$', label):
+        if re.match('^[^/?<>\\:*|"]+(/[^/?<>\\:*|"]+)*$', label):
             return True
         else:
             if raise_error:
