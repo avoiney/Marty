@@ -167,3 +167,39 @@ class SSH(BaseSSH):
 
     def newer(self, attr_new, attr_old):
         return attr_new.get('mtime', 0) != attr_old.get('mtime', 0)
+
+
+class MikrotikLogin(String):
+
+    def validate(self, value):
+        return value + '+e'
+
+
+class MikorikRemoteMethodSchema(BaseSSHRemoteMethodSchema):
+
+    login = Value(MikrotikLogin(), default='admin+e')
+
+
+class Mikrotik(BaseSSH):
+
+    """ Mikrotik through SSH remote.
+    """
+
+    MikorikRemoteMethodSchema = SSHRemoteMethodSchema()
+
+    def get_tree(self, path):
+        tree = Tree()
+        tree.add(b'export', {'type': 'blob'})
+        return tree
+
+    def get_blob(self, path):
+        if path == b'/export':
+            stdin, stdout, stderr = self._ssh.exec_command('/export')
+            stdout.readline()  # Skip the first line containing a timestamp
+            return Blob(blob=stdout)
+
+    def checksum(self, path):
+        return None
+
+    def newer(self, attr_new, attr_old):
+        return False

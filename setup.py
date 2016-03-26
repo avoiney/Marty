@@ -31,5 +31,6 @@ setup(name='marty',
                                        'remotes = marty.commands.remotes:Remotes'],
                     'marty.storages': ['filesystem = marty.storages.filesystem:Filesystem'],
                     'marty.remotemethods': ['local = marty.remotemethods.local:Local',
-                                            'ssh = marty.remotemethods.ssh:SSH']},
+                                            'ssh = marty.remotemethods.ssh:SSH',
+                                            'mikrotik = marty.remotemethods.ssh:Mikrotik']},
       install_requires=['confiture', 'paramiko', 'arrow', 'msgpack-python', 'humanize'])
