@@ -45,9 +45,8 @@ paramiko.SFTPClient.listdir_attr_b = listdir_attr_b
 CHECKSUM_LOOP = 'sh -c \'while read filename; do sha1sum "$filename" || echo "failed"; done;\''
 
 
-class SSHRemoteMethodSchema(DefaultRemoteMethodSchema):
+class BaseSSHRemoteMethodSchema(DefaultRemoteMethodSchema):
 
-    root = Value(String(), default='/')
     server = Value(String(), default=None)
     login = Value(String(), default='root')
     password = Value(String(), default=None)
@@ -57,12 +56,12 @@ class SSHRemoteMethodSchema(DefaultRemoteMethodSchema):
     enable_compression = Value(Boolean(), default=False)
 
 
-class SSH(RemoteMethod):
+class BaseSSH(RemoteMethod):
 
-    """ SSH remote.
+    """ Base class for SSH remote.
     """
 
-    config_schema = SSHRemoteMethodSchema()
+    config_schema = BaseSSHRemoteMethodSchema()
 
     def initialize(self):
         self._ssh = paramiko.client.SSHClient()
@@ -80,16 +79,31 @@ class SSH(RemoteMethod):
                               compress=self.config.get('enable_compression'))
         except paramiko.ssh_exception.SSHException as err:
             raise RemoteOperationError('SSH: %s' % err)
-        transport = self._ssh.get_transport()
-        self._sftp = paramiko.SFTPClient.from_transport(transport)
+
+    def shutdown(self):
+        self._ssh.close()
+
+
+class SSHRemoteMethodSchema(BaseSSHRemoteMethodSchema):
+
+    root = Value(String(), default='/')
+
+
+class SSH(BaseSSH):
+
+    """ SSH remote.
+    """
+
+    config_schema = SSHRemoteMethodSchema()
+
+    def initialize(self):
+        super().initialize()
+        self._sftp = self._ssh.open_sftp()
 
         # Launch the checksum computing loop:
         self._checksum_stdin, self._checksum_stdout, _ = self._ssh.exec_command(CHECKSUM_LOOP)
         # Workaround because Paramiko open stdout as text mode and not binary:
         self._checksum_stdout._set_mode('rb')
-
-    def shutdown(self):
-        self._ssh.close()
 
     @property
     def root(self):
