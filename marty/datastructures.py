@@ -55,7 +55,7 @@ class MsgPackMartyObject(MartyObject):
         This hook is basically used to serialize dates in Arrow objects.
         """
         if isinstance(value, arrow.Arrow):
-            value = msgpack.ExtType(1, value.strftime("%Y%m%dT%H:%M:%S.%f").encode())
+            value = msgpack.ExtType(1, value.isoformat().encode())
         return value
 
     @staticmethod
@@ -65,7 +65,10 @@ class MsgPackMartyObject(MartyObject):
         This hook is basically used to deserialize dates in Arrow objects.
         """
         if code == 1:
-            return arrow.Arrow.strptime(data.decode(), '%Y%m%dT%H:%M:%S.%f')
+            try:
+                return arrow.get(data.decode())
+            except arrow.parser.ParserError:
+                return arrow.Arrow.strptime(data.decode(), '%Y%m%dT%H:%M:%S.%f')
         return msgpack.ExtType(code, data)
 
     @classmethod
