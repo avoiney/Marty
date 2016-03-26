@@ -14,7 +14,7 @@ def scheduler_task(storage, remote, parent):
     ref, backup = create_backup(storage, remote, parent=parent)
 
     # Create labels for the new backup:
-    storage.set_label(backup_label, ref)
+    storage.set_label('%s/%s' % (remote.name, backup_label), ref)
     storage.set_label('%s/latest' % remote.name, ref)
 
     return backup
