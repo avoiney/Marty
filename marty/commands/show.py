@@ -61,5 +61,5 @@ class ShowBackup(Command):
         printer.p()
         printer.p('-' * 80)
         printer.p()
-        printer.table(backup.stats_table())
+        printer.table(backup.stats_table(), fixed_width=80, center=True)
         printer.p()

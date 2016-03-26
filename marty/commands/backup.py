@@ -54,5 +54,5 @@ class Backup(Command):
 
         if args.stats:
             printer.hr()
-            printer.table(backup.stats_table())
+            printer.table(backup.stats_table(), fixed_width=80, center=True)
             printer.p()

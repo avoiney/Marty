@@ -260,17 +260,34 @@ class MartyPrinter(object):
             edited = ftmp.read()
             return edited
 
-    def table(self, lines, width=80):
-        columns = max(len(x) for x in lines)
-        column_size = int(width // columns)
+    def table(self, lines, fixed_width=None, center=False):
+        if fixed_width:  # Fixed width column side mode:
+            number_of_columns = max(len(x) for x in lines)
+            column_size = int(fixed_width // number_of_columns)
+            columns = [column_size] * number_of_columns
+        else:  # Real size column size mode:
+            columns = []
+            for line in lines:
+                for i, cell in enumerate(line):
+                    size = len(self.formatter.parse(cell, strip=True)) + 1
+                    try:
+                        columns[i] = max(columns[i], size)
+                    except IndexError:
+                        columns.append(size)
+
         for line in lines:
             output = ''
-            for cell in line:
+            for size, cell in zip(columns, line):
                 cell_raw_size = len(self.formatter.parse(cell, strip=True))
-                padding = (column_size - cell_raw_size) // 2
-                output += '%s%s%s' % (' ' * padding,
-                                      cell,
-                                      ' ' * (padding if cell_raw_size % 2 == 0 else padding + 1))
+                if center:
+                    padding = (size - cell_raw_size) // 2
+                    output += '%s%s%s' % (' ' * padding,
+                                          cell,
+                                          ' ' * (padding if cell_raw_size % 2 == 0 else padding + 1))
+                else:
+                    padding = size - cell_raw_size
+                    output += '%s%s' % (cell, ' ' * padding)
+
             self.p(output)
 
     def hr(self):
