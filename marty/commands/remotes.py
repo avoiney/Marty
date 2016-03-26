@@ -24,7 +24,7 @@ class Remotes(Command):
                 if remote.scheduler is not None:
                     next_date_text = '<color fg=yellow>now</color>'
             else:
-                latest_date_text = '%s' % latest_backup.start_date.humanize()
+                latest_date_text = latest_backup.start_date.humanize()
                 if remote.scheduler is not None and remote.scheduler['enabled']:
                     next_date = latest_backup.start_date + datetime.timedelta(seconds=remote.scheduler['interval'] * 60)
                     if next_date > arrow.now():
