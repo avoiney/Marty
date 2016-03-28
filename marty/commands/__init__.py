@@ -10,6 +10,7 @@ class Command(object):
     """
 
     help = None
+    aliases = []
 
     @classmethod
     def load_commands(cls, parser):
@@ -22,7 +23,7 @@ class Command(object):
 
     def __init__(self, name, aparser_subs):
         self.name = name
-        self._aparser = aparser_subs.add_parser(name, help=self.help)
+        self._aparser = aparser_subs.add_parser(name, help=self.help, aliases=self.aliases)
         self._aparser.set_defaults(command=self.run, command_name=name)
 
     def add_arg(self, *args, **kwargs):

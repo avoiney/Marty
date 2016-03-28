@@ -22,6 +22,7 @@ class ShowTree(Command):
     """
 
     help = 'Show details about a tree object'
+    aliases = ['ls']
 
     def prepare(self):
         self._aparser.add_argument('remote', nargs='?')
@@ -43,6 +44,7 @@ class ShowBackup(Command):
     """
 
     help = 'Show details about a backup object'
+    aliases = ['show']
 
     def prepare(self):
         self._aparser.add_argument('remote', nargs='?')
