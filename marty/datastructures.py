@@ -6,6 +6,12 @@ import arrow
 import msgpack
 
 
+class MartyObjectDecodeError(RuntimeError):
+
+    """ Error occuring when Marty object unserialization fails.
+    """
+
+
 class MartyObject(object):
 
     """ Base class for objects in a Marty store.
@@ -74,8 +80,14 @@ class MsgPackMartyObject(MartyObject):
     @classmethod
     def from_file(cls, fileobj):
         obj = cls()
-        parsed = msgpack.unpackb(fileobj.read(), encoding='utf8', ext_hook=cls.msgpack_ext_decoder)
-        obj.from_msgpack(parsed)
+        try:
+            parsed = msgpack.unpackb(fileobj.read(), encoding='utf8', ext_hook=cls.msgpack_ext_decoder)
+        except Exception:
+            raise MartyObjectDecodeError('Error while unpacking msgpack object')
+        try:
+            obj.from_msgpack(parsed)
+        except Exception:
+            raise MartyObjectDecodeError('Error while reading msgpack object')
         return obj
 
     def to_file(self):
