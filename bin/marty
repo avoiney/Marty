@@ -25,6 +25,9 @@ def main():
     Command.load_commands(aparser_subs)
     args = aparser.parse_args()
 
+    if 'command' not in args:
+        aparser.error('Missing command')
+
     # Configure the main printer:
     printer.configure(verbose=args.verbose, debug=args.debug)
 
