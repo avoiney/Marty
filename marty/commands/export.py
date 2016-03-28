@@ -1,8 +1,5 @@
-import humanize
-
 from marty.commands import Command
 from marty.operations.export import EXPORT_FORMATS
-from marty.printer import printer
 
 
 class Export(Command):
