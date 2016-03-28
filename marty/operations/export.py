@@ -9,7 +9,7 @@ from marty.operations.objects import walk_tree
 from marty.printer import printer
 
 
-def export_tar(ref, storage, output, compression=None):
+def export_tar(tree, storage, output, compression=None):
     """ Export a tree in tar format.
     """
 
@@ -19,7 +19,7 @@ def export_tar(ref, storage, output, compression=None):
         mode += ':' + compression
 
     with tarfile.open(output, mode) as tar:
-        for fullname, item in walk_tree(storage, ref):
+        for fullname, item in walk_tree(storage, tree):
             payload = None
             info = tarfile.TarInfo()
             info.name = fullname.decode('utf-8', 'ignore')
@@ -64,13 +64,13 @@ def export_tar(ref, storage, output, compression=None):
             tar.addfile(info, payload)
 
 
-def export_directory(ref, storage, output):
+def export_directory(tree, storage, output):
     """ Export a tree in a directory.
     """
 
     os.mkdir(output)
 
-    for fullname, item in walk_tree(storage, ref):
+    for fullname, item in walk_tree(storage, tree):
         outfullname = os.path.join(output.encode('utf-8'), fullname.lstrip(b'/'))
 
         if item.type == 'blob':

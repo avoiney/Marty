@@ -22,4 +22,4 @@ class Export(Command):
         name = '%s/%s' % (args.remote, args.name) if args.remote else args.name
         backup = storage.get_backup(name)
         exporter = EXPORT_FORMATS[args.format]
-        exporter(backup.root, storage, args.output)
+        exporter(storage.get_tree(backup.root), storage, args.output)
