@@ -13,7 +13,8 @@ class Export(Command):
         self._aparser.add_argument('remote', nargs='?')
         self._aparser.add_argument('name')
         self._aparser.add_argument('output')
-        self._aparser.add_argument('-f', '--format', choices=EXPORT_FORMATS, help='Ouput format')
+        self._aparser.add_argument('-f', '--format', choices=EXPORT_FORMATS,
+                                   default='dir', help='Ouput format')
 
     def run(self, args, config, storage, remotes):
         name = '%s/%s' % (args.remote, args.name) if args.remote else args.name
