@@ -7,10 +7,10 @@ from marty.printer import printer
 
 class Export(Command):
 
-    """ Export a backup.
+    """ Export a backup or tree.
     """
 
-    help = 'Export a backup'
+    help = 'Export a backup or tree'
 
     def prepare(self):
         self._aparser.add_argument('remote', nargs='?')
@@ -20,6 +20,6 @@ class Export(Command):
 
     def run(self, args, config, storage, remotes):
         name = '%s/%s' % (args.remote, args.name) if args.remote else args.name
-        backup = storage.get_backup(name)
+        tree = storage.get_tree(name)
         exporter = EXPORT_FORMATS[args.format]
-        exporter(storage.get_tree(backup.root), storage, args.output)
+        exporter(tree, storage, args.output)
