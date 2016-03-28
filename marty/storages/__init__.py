@@ -3,7 +3,7 @@ import re
 from confiture.schema.containers import Section, Value
 from confiture.schema.types import String
 
-from marty.datastructures import Blob, Tree, Backup
+from marty.datastructures import Blob, Tree, Backup, MartyObjectDecodeError
 
 
 class DefaultStorageSchema(Section):
@@ -41,7 +41,10 @@ class Storage(object):
     def get_tree(self, ref):
         """ Decode a tree object from provided ref.
         """
-        return self.get(ref, Tree)
+        try:
+            return self.get(ref, Tree)
+        except MartyObjectDecodeError:
+            return self.get(self.get(ref, Backup).root, Tree)
 
     def get_backup(self, ref):
         """ Decode backup object from provided ref.
