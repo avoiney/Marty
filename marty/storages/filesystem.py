@@ -116,5 +116,7 @@ class Filesystem(Storage):
     def list_labels(self):
         for dirpath, dirnames, filenames in os.walk(self.labels):
             prefix = os.path.relpath(dirpath, self.labels)
+            if prefix == '.':
+                prefix = ''
             for filename in filenames:
                 yield os.path.join(prefix, filename)
