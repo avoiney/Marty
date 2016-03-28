@@ -100,7 +100,10 @@ class Filesystem(Storage):
     def read_label(self, name):
         self.check_label(name, raise_error=True)
         filename = self._get_label_name(name)
-        return open(filename, 'r').read(40)
+        try:
+            return open(filename, 'r').read(40)
+        except FileNotFoundError:
+            return None
 
     def set_label(self, name, ref, overwrite=True):
         self.check_label(name, raise_error=True)
