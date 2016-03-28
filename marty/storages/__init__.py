@@ -6,6 +6,61 @@ from confiture.schema.types import String
 from marty.datastructures import Blob, Tree, Backup, MartyObjectDecodeError
 
 
+class NameResolver(object):
+
+    """ Resolve a name into a reference.
+    """
+
+    def __init__(self, storage):
+        self.storage = storage
+
+    @staticmethod
+    def parse(value):
+        match = re.match('(?P<ref>[^:^]+)(?P<parents>[\^]+)?(?:[:](?P<path>.+))?', value)
+        reference = value
+        parents = 0
+        path = ()
+        if match is None:
+            reference = value
+        else:
+            reference = match.group('ref')
+            if match.group('parents'):
+                parents = len(match.group('parents'))
+            if match.group('path'):
+                path = [x for x in match.group('path').strip('/').split('/') if x]
+        return reference, parents, path
+
+    def resolve(self, name):
+        name, parents, path = self.parse(name)
+
+        if not self.storage.exists(name):
+            name = self.storage.read_label(name)
+
+        for i in range(parents):
+            # Resolving parents assume that the name is a backup
+            backup = self.storage.get_backup(name)
+            if backup is None:
+                raise RuntimeError('Unknown reference')
+            elif backup.parent is None:
+                raise RuntimeError('Backup %s have no parent' % name)
+            else:
+                name = backup.parent
+
+        for component in path:
+            component = component.encode('utf-8')
+            tree = self.storage.get_tree(name)
+            if component in tree:
+                item = tree[component]
+                if item.type == 'tree' and item.ref:
+                    name = item.ref
+                else:
+                    raise RuntimeError('Not a tree: %s' % '/'.join(path))
+            else:
+                raise RuntimeError('Unknown tree: %s' % '/'.join(path))
+
+        return name
+
+
 class DefaultStorageSchema(Section):
 
     _meta = {}
@@ -22,6 +77,7 @@ class Storage(object):
     def __init__(self, name, config):
         self.name = name
         self.config = config
+        self.resolver = NameResolver(self)
         self.prepare()
 
     def get(self, ref, type=None):
@@ -54,13 +110,7 @@ class Storage(object):
     def resolve(self, label):
         """ Resolve a label.
         """
-        if self.exists(label):  # If label exists in storage, it's certainly a ref
-            return label
-        else:
-            try:
-                return self.read_label(label)
-            except FileNotFoundError:
-                return None
+        return self.resolver.resolve(label)
 
     def check_label(self, label, raise_error=False):
         """ Return True if provided label is valid.
