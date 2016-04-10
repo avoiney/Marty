@@ -1,4 +1,5 @@
 import re
+import fnmatch
 
 from confiture.schema.containers import Section, Value
 from confiture.schema.types import String
@@ -124,6 +125,25 @@ class Storage(object):
                 raise RuntimeError('Invalid label "%s"' % label)
             else:
                 return False
+
+    def list_backups(self, pattern=None, since=None, until=None):
+        labels = self.list_labels()
+        for label in labels:
+            if pattern is not None and not fnmatch.fnmatchcase(label, pattern):
+                continue  # Ignore non matching labels
+
+            try:
+                backup = self.get_backup(label)
+            except MartyObjectDecodeError:
+                continue  # Ignore non-backup labels
+
+            if since is not None and backup.start_date < since:
+                continue  # Ignore backups before since date
+
+            if until is not None and backup.start_date > until:
+                continue  # Ignore backups before until date
+
+            yield label, backup
 
     def prepare(self):
         """ Prepare the storage before to use it.
