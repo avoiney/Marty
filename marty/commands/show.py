@@ -60,6 +60,13 @@ class ShowBackup(Command):
         printer.p('<b>Root:</b> {r}', r=backup.root)
         if backup.parent:
             printer.p('<b>Parent:</b> {b}', b=backup.parent)
+        if backup.errors:
+            printer.hr()
+
+            printer.p('<b>{n} errors:</b>', n=len(backup.errors))
+            printer.p()
+            for filename, error in backup.errors.items():
+                printer.p(' - <b>{fn}</b>: {error}', fn=filename.decode('utf-8', 'replace'), error=error)
         printer.p()
         printer.p('-' * 80)
         printer.p()
