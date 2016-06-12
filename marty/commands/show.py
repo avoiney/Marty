@@ -2,8 +2,8 @@ from marty.commands import Command
 from marty.printer import printer
 
 
-WELLKNOW_TREE_ATTR_ORDER = ('type', 'ref', 'filetype', 'mode', 'uid', 'gid',
-                            'atime', 'mtime', 'ctime')
+WELLKNOW_TREE_ATTR_ORDER = ('filetype', 'mode', 'uid', 'gid', 'atime', 'mtime',
+                            'ctime')
 
 
 def tree_attr_sorter(value):
@@ -31,11 +31,16 @@ class ShowTree(Command):
     def run(self, args, config, storage, remotes):
         name = '%s/%s' % (args.remote, args.name) if args.remote else args.name
         tree = storage.get_tree(name)
-        max_name = max(len(x) for x in tree.names())
+        table_lines = [('<b>NAME</b>', '<b>TYPE</b>', '<b>REF</b>', '<b>ATTRIBUTES</b>')]
         for name, details in sorted(tree.items()):
+            name = '<b>%s</b>' % name.decode('utf-8', 'replace')
+            type = details.pop('type', '')
+            ref = details.pop('ref', '')
             fmt = '<color fg=green>%s</color>:<color fg=cyan>%s</color>'
-            details_text = ' '.join(fmt % (k, v) for k, v in sorted(details.items(), key=tree_attr_sorter))
-            printer.p('<b>{n}</b> {d}', n=name.ljust(max_name).decode('utf-8', 'replace'), d=details_text)
+            attributes = ' '.join(fmt % (k, v) for k, v in sorted(details.items(), key=tree_attr_sorter))
+            table_lines.append((name, type, ref, attributes))
+
+        printer.table(table_lines)
 
 
 class ShowBackup(Command):
