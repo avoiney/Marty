@@ -77,3 +77,46 @@ class ShowBackup(Command):
         printer.p()
         printer.table(backup.stats_table(), fixed_width=80, center=True)
         printer.p()
+
+
+class RecursivelyShowTree(Command):
+
+    """ Recursively show a tree object.
+    """
+
+    help = 'Recursively show a tree object'
+
+    def prepare(self):
+        self._aparser.add_argument('remote', nargs='?')
+        self._aparser.add_argument('name')
+
+    def run(self, args, config, storage, remotes):
+        name = '%s/%s' % (args.remote, args.name) if args.remote else args.name
+        tree = storage.get_tree(name)
+        printer.p('<b><color fg=blue>.</color></b>')
+        self._print_tree(storage, tree)
+
+    def _print_tree(self, storage, tree, level=()):
+        last = False
+        next_level = level + (True,)
+
+        for i, (name, item) in enumerate(tree.items()):
+            if len(tree) == i + 1:
+                last = True
+                next_level = level + (False,)
+            header = ''.join([u'│   ' if x else '    ' for x in level])
+            if last:
+                header += '└── '
+            else:
+                header += '├── '
+
+            filename = name.decode('utf-8', 'replace')
+
+            if item.type == 'tree':
+                printer.p('{h}<b><color fg=blue>{f}</color></b>', h=header, f=filename)
+                self._print_tree(storage, storage.get_tree(item.ref), level=next_level)
+            elif item.get('filetype') == 'link':
+                printer.p('{h}<color fg=cyan><b>{f}</b> -> {l}</color>',
+                          h=header, f=filename, l=item.get('link', '?'))
+            else:
+                printer.p('{h}{f}', h=header, f=filename)
