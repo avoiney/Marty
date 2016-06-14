@@ -131,6 +131,9 @@ class Tree(MsgPackMartyObject):
     def __getitem__(self, key):
         return self._items[key]
 
+    def __len__(self):
+        return len(self._items)
+
     def names(self):
         """ Returns sorted names of items.
         """
