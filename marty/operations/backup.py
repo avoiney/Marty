@@ -4,8 +4,11 @@
 import os
 import collections
 
-from marty.datastructures import Backup
+from marty.datastructures import Backup, Tree
 from marty.printer import printer
+
+
+MARTY_EXCLUDE = b'.marty-exclude'
 
 
 def create_backup(storage, remote, parent=None):
@@ -42,6 +45,10 @@ def walk_and_ingest_remote(remote, storage, path=b'/', parent=None):
     errors = {}
     stats = collections.Counter()
     tree = remote.get_tree(path)
+
+    # Handle remotely excluded directories:
+    if MARTY_EXCLUDE in tree:
+        tree = Tree()
 
     for filename, item in tree.items():
         fullname = os.path.join(path, filename)
