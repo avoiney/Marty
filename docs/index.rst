@@ -6,11 +6,17 @@
 Welcome to Marty's documentation!
 =================================
 
+The documentation needs lot of work! Don't hesitate to submit your improvements.
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   introduction
+   installation
+   usage
+   development
 
 
 Indices and tables
