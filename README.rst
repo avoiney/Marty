@@ -40,7 +40,7 @@ Marty depends on:
 - msgpack-python
 - humanize
 
-Marty can be install via setuptools with the following command: ::
+Marty can be installed via setuptools with the following command: ::
 
     python setup.py install
 
@@ -48,11 +48,11 @@ Marty can be install via setuptools with the following command: ::
 Configuration
 ^^^^^^^^^^^^^
 
-By default Marty will look for its configuration on: ::
+By default Marty will look for its configuration at: ::
 
     /etc/marty.conf
 
-But you can also put your configuration anywhere else and pass it on the
+But you can also put your configuration anywhere else and pass it in the
 command line: ::
 
     marty -c /path/to/configuration.conf command
@@ -74,12 +74,12 @@ We will start with a simple configuration as example: ::
         }
     }
 
-The ``storage`` section tells Marty to store backups on the ``/tmp/marty`` folder
+The ``storage`` section tells Marty to store backups in the ``/tmp/marty`` folder
 of the local ``filesystem``.
 
-The ``scheduler`` section won't be covered on this tutorial.
+The ``scheduler`` section won't be covered in this tutorial.
 
-The ``remotes`` section specifies what is to be backuped. Here we have only one item
+The ``remotes`` section specifies what is to be backed up. Here we have only one item
 which is a local directory. We could also add a remote SSH directory with the
 'ssh' method.
 
