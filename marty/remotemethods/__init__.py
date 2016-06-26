@@ -124,10 +124,20 @@ class RemoteMethod(object):
         """
         raise NotImplementedError('%s remote type does not implement list_directory' % self.__class__.__name__)
 
+    def put_tree(self, tree, path):
+        """ Put tree items at the specified path.
+        """
+        raise NotImplementedError('%s remote type does not implement put_tree' % self.__class__.__name__)
+
     def get_blob(self, path):
         """ Return a Blob object for the specified path.
         """
         raise NotImplementedError('%s remote type does not implement get_blob' % self.__class__.__name__)
+
+    def put_blob(self, blob, path):
+        """ Restore a blob object on the specified path.
+        """
+        raise NotImplementedError('%s remote type does not implement set_blob' % self.__class__.__name__)
 
     def checksum(self, path):
         """ Compute checksum of the provided path to blob object.
