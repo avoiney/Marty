@@ -92,6 +92,11 @@ class SSHRemoteMethodSchema(BaseSSHRemoteMethodSchema):
 class SSH(BaseSSH):
 
     """ SSH remote.
+
+    Known issues:
+        - On restore mechanism (located in put_tree mostly):
+            * FIFO files are not created due to SFTP protocol limitation
+            * Symlink are not chown/chmod due to SFTP protocol limitation
     """
 
     config_schema = SSHRemoteMethodSchema()
@@ -142,6 +147,56 @@ class SSH(BaseSSH):
             tree.add(filename, item)
         return tree
 
+    def put_tree(self, tree, path):
+        path = path.lstrip(os.sep.encode('utf-8'))
+        directory = os.path.join(self.root, path)
+
+        directory_stats = {x.filename: x for x in self._sftp.listdir_attr_b(directory)}
+
+        for name, item in tree.items():
+            fullname = os.path.join(directory, name)
+            fstat = directory_stats.get(name)
+
+            # Create the file itself according to its type:
+            if item.get('filetype') == 'regular':
+                if fstat is not None and not stat.S_ISREG(fstat.st_mode):
+                    raise RemoteOperationError('%s already exists and not a regular file' % fullname)
+                else:
+                    try:
+                        self._sftp.open(fullname, 'a').close()
+                    except IOError as err:
+                        raise RemoteOperationError(err.strerror)
+            elif item.get('filetype') == 'directory':
+                if fstat is not None and not stat.S_ISDIR(fstat.st_mode):
+                    raise RemoteOperationError('%s already exists and not a directory' % fullname)
+                elif fstat is None:
+                    try:
+                        self._sftp.mkdir(fullname)
+                    except OSError as err:
+                        raise RemoteOperationError(err.strerror)
+            elif item.get('filetype') == 'link':
+                if 'link' in item:
+                    try:
+                        if fstat is not None:
+                            if stat.S_ISLNK(fstat.st_mode):
+                                if self._sftp.readlink(fullname) != item['link']:
+                                    self._sftp.unlink(fullname)
+                                    self._sftp.symlink(item['link'], fullname)
+                            else:
+                                raise RemoteOperationError('%s already exists and not a link' % fullname)
+                        else:
+                            self._sftp.symlink(item['link'], fullname)
+                    except OSError as err:
+                        raise RemoteOperationError(err.strerror)
+            else:
+                pass  # Ignore unknown file types
+
+            # Set files metadata:
+            if item.get('filetype') in ('regular', 'directory'):
+                self._sftp.chown(fullname, item.get('uid'), item.get('gid'))
+                if 'mode' in item:
+                    self._sftp.chmod(fullname, item['mode'])
+
     def get_blob(self, path):
         path = path.lstrip(os.sep.encode('utf-8'))
         fullname = os.path.join(self.root, path)
@@ -153,6 +208,14 @@ class SSH(BaseSSH):
             remote_file.prefetch()
         blob = Blob(blob=remote_file)
         return blob
+
+    def put_blob(self, blob, path):
+        path = path.lstrip(os.sep.encode('utf-8'))
+        fullname = os.path.join(self.root, path)
+        try:
+            self._sftp.putfo(blob.to_file(), fullname)
+        except Exception as err:
+            raise RemoteOperationError(str(err))
 
     def checksum(self, path):
         path = path.lstrip(os.sep.encode('utf-8'))
