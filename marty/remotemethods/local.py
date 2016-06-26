@@ -1,6 +1,7 @@
 import os
 import stat
 import hashlib
+import shutil
 
 from confiture.schema.containers import Value
 from confiture.schema.types import String
@@ -65,6 +66,68 @@ class Local(RemoteMethod):
             tree.add(filename, item)
         return tree
 
+    def put_tree(self, tree, path):
+        path = path.lstrip(os.sep.encode('utf-8'))
+        directory = os.path.join(self.root, path)
+        for name, item in tree.items():
+            fullname = os.path.join(directory, name)
+            try:
+                fstat = os.lstat(fullname)
+            except FileNotFoundError:
+                fstat = None
+
+            # Create the file itself according to its type:
+            if item.get('filetype') == 'regular':
+                if fstat is not None and not stat.S_ISREG(fstat.st_mode):
+                    raise RemoteOperationError('%s already exists and not a regular file' % fullname)
+                else:
+                    try:
+                        with open(fullname, 'a'):
+                            pass
+                    except OSError as err:
+                        raise RemoteOperationError(err.strerror)
+            elif item.get('filetype') == 'directory':
+                try:
+                    os.mkdir(fullname)
+                except FileExistsError:
+                    if stat.S_ISDIR(fstat.st_mode):
+                        pass  # Ignore already existing directory
+                    else:
+                        raise RemoteOperationError('%s already exists and not a directory' % fullname)
+                except OSError as err:
+                    raise RemoteOperationError(err.strerror)
+            elif item.get('filetype') == 'link':
+                if 'link' in item:
+                    try:
+                        if fstat is not None:
+                            if stat.S_ISLNK(fstat.st_mode):
+                                os.unlink(fullname)
+                            else:
+                                raise RemoteOperationError('%s already exists and not a link' % fullname)
+                        os.symlink(item['link'], fullname)
+                    except OSError as err:
+                        raise RemoteOperationError(err.strerror)
+            elif item.get('filetype') == 'fifo':
+                try:
+                    os.mkfifo(fullname)
+                except FileExistsError:
+                    if stat.S_ISFIFO(fstat.st_mode):
+                        pass  # Ignore already existing FIFO file
+                    else:
+                        raise RemoteOperationError('%s already exists and not a FIFO file' % fullname)
+                except OSError as err:
+                    raise RemoteOperationError(err.strerror)
+            else:
+                pass  # Ignore unknown file types
+
+            # Set files metadata:
+            os.chown(fullname, item.get('uid', -1), item.get('gid', -1), follow_symlinks=False)
+            if 'mode' in item:
+                try:
+                    os.chmod(fullname, item['mode'], follow_symlinks=False)
+                except SystemError:
+                    pass  # Workaround follow_symlinks not implemented in Python 3.5 (bug?)
+
     def get_blob(self, path):
         path = path.lstrip(os.sep.encode('utf-8'))
         try:
@@ -72,6 +135,14 @@ class Local(RemoteMethod):
         except OSError as err:
             raise RemoteOperationError(err.strerror)
         return blob
+
+    def put_blob(self, blob, path):
+        path = path.lstrip(os.sep.encode('utf-8'))
+        fullname = os.path.join(self.root, path)
+        try:
+            shutil.copyfileobj(blob.to_file(), open(fullname, 'wb'))
+        except OSError as err:
+            raise RemoteOperationError(err.strerror)
 
     def checksum(self, path):
         path = path.lstrip(os.sep.encode('utf-8'))
