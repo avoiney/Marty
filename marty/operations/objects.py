@@ -3,6 +3,7 @@
 
 import os
 
+from marty.datastructures import Tree
 from marty.printer import printer
 
 
@@ -67,3 +68,41 @@ def gc(storage, delete=True):
         if delete:
             storage.delete(ref)
     return count, size
+
+
+def get_parent_tree(storage, root_tree, path):
+    """ Get parent tree and parent path for the provided root tree and path.
+
+    Return a couple (parent_tree, parent_path) where parent_tree is a forged
+    tree with the last path component as single item and parent_path the path
+    to the latest base directory (eg: path is "/foo/bar", parent_tree will be
+    created with a single item "bar" and parent_path will be "/foo").
+
+    If path is "/" or "", parent_tree will be root_tree and parent_path will be
+    empty.
+    """
+
+    components = [x for x in path.strip(b'/').split(b'/') if x]
+    tree = root_tree
+
+    for component in components[:-1]:
+        if component in tree:
+            item = tree[component]
+            if item.type == 'tree' and item.ref:
+                tree = storage.get_tree(item.ref)
+            else:
+                raise RuntimeError('Not a tree: %s' % component.decode('utf8', 'ignore'))
+        else:
+            raise RuntimeError('Unknown tree: %s' % component.decode('utf8', 'ignore'))
+
+    if components:
+        component = components[-1]
+        if component in tree:
+            item = tree[component]
+            tree = Tree()
+            tree.add(component, item)
+        else:
+            raise RuntimeError('Unknown item: %s' % component.decode('utf8', 'ignore'))
+        return tree, b'/'.join(components[:-1])
+    else:
+        return root_tree, b''
