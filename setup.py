@@ -36,4 +36,4 @@ setup(name='marty',
                     'marty.remotemethods': ['local = marty.remotemethods.local:Local',
                                             'ssh = marty.remotemethods.ssh:SSH',
                                             'mikrotik = marty.remotemethods.ssh:Mikrotik']},
-      install_requires=['confiture', 'paramiko', 'arrow', 'msgpack-python', 'humanize'])
+      install_requires=['confiture', 'paramiko', 'arrow', 'msgpack-python', 'humanize', 'llfuse'])
