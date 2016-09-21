@@ -2,6 +2,7 @@
 """
 
 import os
+import hashlib
 
 from marty.datastructures import Tree
 from marty.printer import printer
@@ -68,6 +69,21 @@ def gc(storage, delete=True):
         if delete:
             storage.delete(ref)
     return count, size
+
+
+def check(storage, read_size=4096):
+    """ Check hash of all objects in the pool.
+    """
+    for ref in storage.list():
+        printer.verbose('Checking {ref}', ref=ref, err=True)
+        hasher = hashlib.sha1()
+        fobject = storage.open(ref)
+        buf = fobject.read(read_size)
+        while buf:
+            hasher.update(buf)
+            buf = fobject.read(read_size)
+        if hasher.hexdigest() != ref:
+            printer.p(ref)
 
 
 def get_parent_tree(storage, root_tree, path):
