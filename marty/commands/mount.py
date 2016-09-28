@@ -1,5 +1,6 @@
 import tempfile
 import os
+import os.path
 import subprocess
 
 from marty.commands import Command
@@ -19,9 +20,13 @@ class Mount(Command):
         self._aparser.add_argument('mountpoint')
 
     def run(self, args, config, storage, remotes):
+        mountpoint = os.path.abspath(os.path.expanduser(args.mountpoint))
+        if not os.path.exists(mountpoint):
+            raise RuntimeError('Given mountpoint (%s) does not exist' % mountpoint)
+
         name = '%s/%s' % (args.remote, args.name) if args.remote else args.name
         tree = storage.get_tree(name)
-        MartyFS(storage, tree, args.mountpoint).mount()
+        MartyFS(storage, tree, mountpoint).mount()
 
 
 class Explore(Command):
