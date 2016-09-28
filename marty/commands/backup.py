@@ -25,6 +25,9 @@ class Backup(Command):
 
     def run(self, args, config, storage, remotes):
         remote = remotes.get(args.remote)
+        if remote is None:
+            raise RuntimeError('Given remote (%s) does not exist' % args.remote)
+
         backup_label = '%s/%s' % (remote.name, args.name)
 
         if not args.overwrite and storage.resolve(backup_label):
