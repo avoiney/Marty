@@ -4,7 +4,7 @@ import hashlib
 import shutil
 
 from confiture.schema.containers import Value
-from confiture.schema.types import String
+from confiture.schema.types import Path
 
 from marty.remotemethods import DefaultRemoteMethodSchema, RemoteMethod, RemoteOperationError
 from marty.datastructures import Tree, Blob
@@ -12,7 +12,7 @@ from marty.datastructures import Tree, Blob
 
 class LocalRemoteMethodSchema(DefaultRemoteMethodSchema):
 
-    root = Value(String(), default='/')
+    root = Value(Path(), default='/')
 
 
 class Local(RemoteMethod):

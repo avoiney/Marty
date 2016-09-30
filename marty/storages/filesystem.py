@@ -3,14 +3,14 @@ import hashlib
 import tempfile
 
 from confiture.schema.containers import Value
-from confiture.schema.types import String
+from confiture.schema.types import Path
 
 from marty.storages import DefaultStorageSchema, Storage
 
 
 class FilesystemStorageSchema(DefaultStorageSchema):
 
-    location = Value(String())
+    location = Value(Path())
 
 
 class Filesystem(Storage):
