@@ -137,7 +137,6 @@ class MartyFSHandler(llfuse.Operations):
         return fobj.read(size)
 
     def release(self, fh):
-        print(fh)
         if fh in self.fd:
             self.fd[fh].close()
             del self.fd[fh]
