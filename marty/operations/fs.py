@@ -118,7 +118,7 @@ class MartyFSHandler(llfuse.Operations):
         if 'link' not in attrs:
             raise llfuse.FUSEError(errno.ENOENT)
 
-        return attrs['link'].encode('utf8')
+        return attrs['link']
 
     def open(self, inode, flags, ctx):
         attrs = self.inodes.get(inode)
