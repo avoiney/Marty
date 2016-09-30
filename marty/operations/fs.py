@@ -36,12 +36,13 @@ class MartyFSHandler(llfuse.Operations):
 
         if item.get('type') == 'tree' and 'ref' in item:
             item['tree'] = self.storage.get_tree(item['ref'])
-        elif item.get('type') == 'blob' and 'ref' in item:
-            item['blob'] = self.storage.get_blob(item['ref'])
 
         self.inodes[inode] = item
 
         return inode
+
+    def _get_blob(self, item):
+        return self.storage.get_blob(item['ref'])
 
     def getattr(self, inode, ctx=None):
         attrs = self.inodes.get(inode)
@@ -122,11 +123,11 @@ class MartyFSHandler(llfuse.Operations):
 
     def open(self, inode, flags, ctx):
         attrs = self.inodes.get(inode)
-        if 'blob' not in attrs:
+        if attrs.get('type', None) != 'blob':
             raise llfuse.FUSEError(errno.ENOENT)
 
         fh = next(self.fd_index)
-        self.fd[fh] = attrs['blob'].to_file()
+        self.fd[fh] = self._get_blob(attrs).to_file()
 
         return fh
 
