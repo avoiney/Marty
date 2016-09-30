@@ -175,5 +175,6 @@ class MartyFS(object):
         if self.llfuse_worker is not None:
             self.llfuse_worker.terminate()
             self.llfuse_worker.join()
+            self.llfuse_worker = None
         else:
             raise RuntimeError('Filesystem is not mounted')
