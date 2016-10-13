@@ -44,7 +44,7 @@ def export_tar(tree, storage, output, compression=None):
                     printer.verbose('Adding to {out}: <b>{fn}</b> (link to {link})',
                                     out=output,
                                     fn=fullname.decode('utf-8', errors='ignore'),
-                                    link=item['link'])
+                                    link=item['link'].decode('utf-8', errors='replace'))
 
                 elif item['filetype'] == 'fifo':
                     info.type = tarfile.FIFOTYPE
@@ -92,7 +92,7 @@ def export_directory(tree, storage, output):
                 printer.verbose('Exporting to {out}: <b>{fn}</b> (link to {link})',
                                 out=output,
                                 fn=fullname.decode('utf-8', errors='replace'),
-                                link=item['link'])
+                                link=item['link'].decode('utf-8', errors='replace'))
 
             elif item['filetype'] == 'fifo':
                 os.mkfifo(outfullname)

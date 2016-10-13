@@ -131,7 +131,7 @@ class SSH(BaseSSH):
                 item['filetype'] = 'directory'
             elif stat.S_ISLNK(fattr.st_mode):
                 item['filetype'] = 'link'
-                item['link'] = self._sftp.readlink(os.path.join(directory, filename))
+                item['link'] = self._sftp.readlink(os.path.join(directory, filename)).encode('utf8')
             elif stat.S_ISFIFO(fattr.st_mode):
                 item['filetype'] = 'fifo'
             else:
@@ -179,7 +179,7 @@ class SSH(BaseSSH):
                     try:
                         if fstat is not None:
                             if stat.S_ISLNK(fstat.st_mode):
-                                if self._sftp.readlink(fullname) != item['link']:
+                                if self._sftp.readlink(fullname).encode('utf8') != item['link']:
                                     self._sftp.unlink(fullname)
                                     self._sftp.symlink(item['link'], fullname)
                             else:
