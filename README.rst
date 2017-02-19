@@ -1,3 +1,5 @@
+.. image:: https://raw.github.com/NaPs/Marty/master/.marty.png
+
 Marty
 =====
 
