@@ -63,24 +63,69 @@ class Diff(Command):
 
     def prepare(self):
         self._aparser.add_argument('remote', nargs='?')
-        self._aparser.add_argument('names', nargs=2)
+        self._aparser.add_argument('ref_name')
+        self._aparser.add_argument('name')
+
+    def _print_diff_tree(self, storage, ref_tree, tree, level=()):
+        last = False
+        next_level = level + (True,)
+
+        ref_tree_set = set(ref_tree.names()) if ref_tree else set()
+        tree_set = set(tree.names())
+        adds = tree_set.difference(ref_tree_set)
+        deletions = ref_tree_set.difference(tree_set)
+
+        all_items = tree_set.union(ref_tree_set)
+
+        for i, (name) in enumerate(sorted(all_items)):
+            if len(tree) == i + 1:
+                last = True
+                next_level = level + (False,)
+            header = ''.join([u'│   ' if x else '    ' for x in level])
+            if last:
+                header += '└── '
+            else:
+                header += '├── '
+
+            # setup filename colors
+            color = 'yellow'
+            ref_item = None
+            item = None
+            if name in adds:
+                item = tree[name]
+                color = 'green'
+            elif name in deletions:
+                item = ref_tree[name]
+                ref_item = ref_tree[name]
+                color = 'red'
+            else:
+                item = tree[name]
+                ref_item = ref_tree[name]
+
+            filename = name.decode('utf-8', 'replace')
+            # only print filename when there is a diff
+            if name in adds or name in deletions or item.ref != ref_item.ref:
+                if item.type == 'tree':
+                    printer.p('{h}<color fg={color}><b>{f}</b></color>',
+                              h=header, f=filename, color=color)
+                    ref_object = storage.get_tree(ref_item.ref) if ref_item else None
+                    self._print_diff_tree(storage, ref_object,
+                                          storage.get_tree(item.ref), level=next_level)
+                elif item.get('filetype') == 'link':
+                    printer.p('{h}<color fg={color}><b>{f}</b> -> {l}</color>',
+                              h=header, f=filename, l=item.get('link', '?'),
+                              color=color)
+                else:
+                    printer.p('{h}<color fg={color}>{f}</color>',
+                              h=header, color=color, f=filename)
 
     def run(self, args, config, storage, remotes):
-        names = ['%s/%s' % (args.remote, name) if args.remote else name for name in args.names]
-        trees = [storage.get_tree(name) for name in names]
-
-        with tempfile.TemporaryDirectory() as fullname1, tempfile.TemporaryDirectory() as fullname2:
-            fs1 = MartyFS(storage, trees[0], fullname1)
-            fs2 = MartyFS(storage, trees[1], fullname2)
-            fs1.mount()
-            fs2.mount()
-            pshell = subprocess.Popen(['diff', '-q', '-r', '--no-dereference', '--suppress-common-lines',
-                                       fullname1, fullname2], stdout=subprocess.PIPE)
-            pshell.wait()
-            output = pshell.stdout.read().decode('utf8')
-            fs2.umount()
-            fs1.umount()
-            names_filenames = zip((fullname1, fullname2), names)
-            for name_filename in names_filenames:
-                output = output.replace(*name_filename)
-            printer.p('Diff output betwwen <b>%s</b> and <b>%s</b>:\n\n%s' % (*names, output))
+        ref_name = '%s/%s' % (args.remote, args.ref_name) if args.remote else args.ref_name
+        other_name = '%s/%s' % (args.remote, args.name) if args.remote else args.name
+        ref_backup = storage.get_backup(ref_name)
+        ref_tree = storage.get_tree(ref_name)
+        other_tree = storage.get_tree(other_name)
+        printer.p('<b>Backup reference date:</b> {backup_date}',
+                  backup_date=ref_backup.start_date.format('DD/MM/YYYY HH:mm:ss'))
+        printer.p('<b>Backup reference root:</b> {backup_root}\n', backup_root=ref_backup.root)
+        self._print_diff_tree(storage, ref_tree, other_tree)
