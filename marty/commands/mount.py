@@ -122,10 +122,6 @@ class Diff(Command):
     def run(self, args, config, storage, remotes):
         ref_name = '%s/%s' % (args.remote, args.ref_name) if args.remote else args.ref_name
         other_name = '%s/%s' % (args.remote, args.name) if args.remote else args.name
-        ref_backup = storage.get_backup(ref_name)
         ref_tree = storage.get_tree(ref_name)
         other_tree = storage.get_tree(other_name)
-        printer.p('<b>Backup reference date:</b> {backup_date}',
-                  backup_date=ref_backup.start_date.format('DD/MM/YYYY HH:mm:ss'))
-        printer.p('<b>Backup reference root:</b> {backup_root}\n', backup_root=ref_backup.root)
         self._print_diff_tree(storage, ref_tree, other_tree)
